@@ -54,7 +54,7 @@ app.post('/api/books', async (req, res) => {
 });
 
 // 3. Update a book by id (imageURL remains fixed)
-app.put('/api/books/:id', async (req, res) => {
+app.patch('/api/books/:id', async (req, res) => {
     const { id } = req.params;
     const { title, author, category, isAvailable, isVerified } = req.body;
 

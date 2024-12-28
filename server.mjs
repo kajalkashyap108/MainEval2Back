@@ -56,7 +56,7 @@ app.post('/api/books', async (req, res) => {
 // 3. Update a book by id (imageURL remains fixed)
 app.patch('/api/books/:id', async (req, res) => {
     const { id } = req.params;
-    const { title, author, category, isAvailable, isVerified } = req.body;
+    const { isVerified } = req.body;
 
     const bookIndex = db.data.books.findIndex((book) => book.id === parseInt(id));
 

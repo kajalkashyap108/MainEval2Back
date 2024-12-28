@@ -1,93 +1,98 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const cors = require('cors');
+const { Low, JSONFile } = require('lowdb');
 const app = express();
-const port = process.env.PORT || 3000;
+const port = 3000;
 
-// Middleware to parse JSON
-app.use(express.json());
+// Middleware
+app.use(cors());
+app.use(express.json());  // To parse JSON data
 
-// Hardcoded image URL
-const imageUrl = "https://m.media-amazon.com/images/I/71ZB1BPNS22._jpg";
+// Create a JSON file-based database
+const db = new Low(new JSONFile('db.json'));
 
-// Supported categories
-const supportedCategories = ["Fiction", "Comedy", "Technical"];
+// Initialize the database
+async function initDb() {
+    await db.read();
+    db.data ||= { books: [] };  // Initialize an empty array if no data exists
+    await db.write();
+}
 
-// Path to the database file
-const dbFilePath = path.join(__dirname, 'db.json');
+// Run initialization
+initDb();
 
-// Helper function to read data from db.json
-const readBooksFromDB = () => {
-    if (!fs.existsSync(dbFilePath)) {
-        return [];
-    }
-    const data = fs.readFileSync(dbFilePath);
-    return JSON.parse(data);
-};
+// CRUD Routes
 
-// Helper function to write data to db.json
-const writeBooksToDB = (books) => {
-    fs.writeFileSync(dbFilePath, JSON.stringify(books, null, 2));
-};
-
-// Initialize books from db.json
-let books = readBooksFromDB();
-
-// Base route: /beoks/
-const baseRoute = "/beoks";
-
-// Get all books
-app.get(`${baseRoute}`, (req, res) => {
-    res.json(books);
+// 1. Get all books
+app.get('/api/books', async (req, res) => {
+    await db.read();
+    res.json(db.data.books);
 });
 
-// Add a new book
-app.post(`${baseRoute}`, (req, res) => {
-    const { title, category, isAvailable = true, isVerified = false } = req.body;
+// 2. Create a new book (fixed imageURL)
+app.post('/api/books', async (req, res) => {
+    const { title, author, category, isAvailable, isVerified } = req.body;
 
-    // Validate category
-    if (!supportedCategories.includes(category)) {
-        return res.status(400).json({ error: `Category must be one of: ${supportedCategories.join(', ')}` });
+    if (!title || !author || !category) {
+        return res.status(400).json({ message: 'Missing required fields' });
     }
 
-    // Create a new book object
     const newBook = {
-        id: books.length + 1,
+        id: db.data.books.length + 1, // Generate simple id
         title,
+        author,
         category,
-        isAvailable,
-        isVerified,
-        imageUrl
+        isAvailable: isAvailable || true,
+        isVerified: isVerified || null,
+        imageURL: "https://marketplace.canva.com/EAFf0E5urqk/1/0/1003w/canva-blue-and-green-surreal-fiction-book-cover-53S3IzrNxvY.jpg", // Fixed image URL
     };
 
-    // Add the book to the list
-    books.push(newBook);
-    writeBooksToDB(books);
+    db.data.books.push(newBook);
+    await db.write();
     res.status(201).json(newBook);
 });
 
-// Get a book by ID
-app.get(`${baseRoute}/:id`, (req, res) => {
-    const book = books.find(b => b.id === parseInt(req.params.id));
-    if (!book) {
-        return res.status(404).json({ error: "Book not found" });
+// 3. Update a book by id (imageURL remains fixed)
+app.put('/api/books/:id', async (req, res) => {
+    const { id } = req.params;
+    const { title, author, category, isAvailable, isVerified } = req.body;
+
+    const bookIndex = db.data.books.findIndex((book) => book.id === parseInt(id));
+
+    if (bookIndex === -1) {
+        return res.status(404).json({ message: 'Book not found' });
     }
-    res.json(book);
+
+    const updatedBook = {
+        ...db.data.books[bookIndex],
+        title,
+        author,
+        category,
+        isAvailable,
+        isVerified,
+        imageURL: "https://marketplace.canva.com/EAFf0E5urqk/1/0/1003w/canva-blue-and-green-surreal-fiction-book-cover-53S3IzrNxvY.jpg", // Fixed image URL
+    };
+
+    db.data.books[bookIndex] = updatedBook;
+    await db.write();
+    res.json(updatedBook);
 });
 
-// Delete a book by ID
-app.delete(`${baseRoute}/:id`, (req, res) => {
-    const bookIndex = books.findIndex(b => b.id === parseInt(req.params.id));
+// 4. Delete a book by id
+app.delete('/api/books/:id', async (req, res) => {
+    const { id } = req.params;
+    const bookIndex = db.data.books.findIndex((book) => book.id === parseInt(id));
+
     if (bookIndex === -1) {
-        return res.status(404).json({ error: "Book not found" });
+        return res.status(404).json({ message: 'Book not found' });
     }
 
-    const deletedBook = books.splice(bookIndex, 1);
-    writeBooksToDB(books);
-    res.json(deletedBook);
+    db.data.books.splice(bookIndex, 1);
+    await db.write();
+    res.status(204).send();
 });
 
 // Start the server
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    console.log(`Server is running on http://localhost:${port}`);
 });

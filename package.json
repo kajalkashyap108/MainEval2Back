@@ -4,7 +4,7 @@
   "description": "A simple backend for managing books using Node.js and Express.js",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.mjs"
   },
   "type": "module",
   "dependencies": {

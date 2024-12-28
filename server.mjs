@@ -32,7 +32,7 @@ app.get('/api/books', async (req, res) => {
 
 // 2. Create a new book (fixed imageURL)
 app.post('/api/books', async (req, res) => {
-    const { title, author, category, isAvailable, isVerified } = req.body;
+    const { title, author, category, isAvailable, isVerified, borrowedDays } = req.body;
 
     if (!title || !author || !category) {
         return res.status(400).json({ message: 'Missing required fields' });
@@ -45,6 +45,7 @@ app.post('/api/books', async (req, res) => {
         category,
         isAvailable: isAvailable || true,
         isVerified: isVerified || null,
+        borrowedDays: borrowedDays || null,
         imageURL: "https://marketplace.canva.com/EAFf0E5urqk/1/0/1003w/canva-blue-and-green-surreal-fiction-book-cover-53S3IzrNxvY.jpg", // Fixed image URL
     };
 
@@ -56,7 +57,7 @@ app.post('/api/books', async (req, res) => {
 // 3. Update a book by id (imageURL remains fixed)
 app.patch('/api/books/:id', async (req, res) => {
     const { id } = req.params;
-    const { isVerified } = req.body;
+    const { isVerified, borrowedDays } = req.body;
 
     const bookIndex = db.data.books.findIndex((book) => book.id === parseInt(id));
 
@@ -68,6 +69,7 @@ app.patch('/api/books/:id', async (req, res) => {
         ...db.data.books[bookIndex],
         
         isVerified,
+        borrowedDays,
         imageURL: "https://marketplace.canva.com/EAFf0E5urqk/1/0/1003w/canva-blue-and-green-surreal-fiction-book-cover-53S3IzrNxvY.jpg", // Fixed image URL
     };
 

@@ -57,7 +57,7 @@ app.post('/api/books', async (req, res) => {
 // 3. Update a book by id (imageURL remains fixed)
 app.patch('/api/books/:id', async (req, res) => {
     const { id } = req.params;
-    const { isVerified, borrowedDays } = req.body;
+    const { isAvailable, isVerified, borrowedDays } = req.body;
 
     const bookIndex = db.data.books.findIndex((book) => book.id === parseInt(id));
 
@@ -68,6 +68,7 @@ app.patch('/api/books/:id', async (req, res) => {
     const updatedBook = {
         ...db.data.books[bookIndex],
         
+        isAvailable,
         isVerified,
         borrowedDays,
         imageURL: "https://marketplace.canva.com/EAFf0E5urqk/1/0/1003w/canva-blue-and-green-surreal-fiction-book-cover-53S3IzrNxvY.jpg", // Fixed image URL

@@ -65,19 +65,22 @@ app.patch('/api/books/:id', async (req, res) => {
         return res.status(404).json({ message: 'Book not found' });
     }
 
+    const currentBook = db.data.books[bookIndex];
+
     const updatedBook = {
-        ...db.data.books[bookIndex],
-        
-        isAvailable,
-        isVerified,
-        borrowedDays,
-        imageURL: "https://marketplace.canva.com/EAFf0E5urqk/1/0/1003w/canva-blue-and-green-surreal-fiction-book-cover-53S3IzrNxvY.jpg", // Fixed image URL
+        ...currentBook,
+        ...(isAvailable !== undefined && { isAvailable }),
+        ...(isVerified !== undefined && { isVerified }),
+        ...(borrowedDays !== undefined && { borrowedDays }),
+        imageURL: currentBook.imageURL
     };
 
     db.data.books[bookIndex] = updatedBook;
     await db.write();
+
     res.json(updatedBook);
 });
+
 
 // 4. Delete a book by id
 app.delete('/api/books/:id', async (req, res) => {
